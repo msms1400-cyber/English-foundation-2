@@ -1,0 +1,638 @@
+<!DOCTYPE html>  
+<html lang="ar" dir="rtl">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+    <title>English Action & Routine - حياتي اليومية</title>  
+    <script src="https://cdn.tailwindcss.com"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>  
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">  
+    <style>  
+        body { font-family: 'Cairo', sans-serif; background-color: #fdf4ff; color: #1f2937; } /* خلفية جديدة تناسب الحيوية (بنفسجي فاتح/زهري) */  
+        .en-text { font-family: 'Nunito', sans-serif; }  
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }  
+        .slide-up { animation: slideUp 0.4s ease-out; }  
+          
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }  
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }  
+          
+        @keyframes soundPulse {  
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }  
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }  
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }  
+        }  
+        .is-speaking { animation: soundPulse 1s infinite; background-color: #fef3c7 !important; border-color: #f59e0b !important; color: #b45309 !important;}  
+          
+        @keyframes starShine {  
+            0% { transform: scale(1) rotate(0deg); }  
+            50% { transform: scale(1.2) rotate(15deg); filter: drop-shadow(0 0 5px gold); }  
+            100% { transform: scale(1) rotate(0deg); }  
+        }  
+        .star-anim { animation: starShine 2s infinite; display: inline-block; }  
+  
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }  
+        .btn-press:active { transform: scale(0.95); transition: transform 0.1s; }  
+          
+        .cert-mode-active #app-header { display: none !important; }  
+        .cert-mode-active #cert-controls { display: none !important; }  
+        .cert-wrapper { width: 100%; margin: 0 auto; background: #fff; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }  
+        .cert-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 8px solid #c026d3; outline: 3px solid #fbbf24; outline-offset: -8px; z-index: 1; pointer-events: none;}  
+        .cert-content { position: relative; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1rem; text-align: center; }  
+          
+        .no-scrollbar::-webkit-scrollbar { display: none; }  
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }  
+  
+        @media (min-width: 768px) {  
+            .cert-wrapper { max-width: 1000px; aspect-ratio: 1.414 / 1; overflow: hidden; min-height: auto !important; }  
+            .cert-bg { border-width: 15px; outline-width: 5px; outline-offset: -20px; }  
+            .cert-content { padding: 40px; min-height: auto; height: 100%; justify-content: center;}  
+        }  
+        .badge-locked { filter: grayscale(100%) opacity(0.4); }  
+  
+        /* ألوان مخصصة للتطبيق الثاني (برتقالي/بنفسجي) */  
+        .theme-gradient { background: linear-gradient(135deg, #f97316, #db2777); }  
+    </style>  
+</head>  
+<body class="min-h-screen flex flex-col bg-slate-50 selection:bg-orange-200 relative">  
+  
+    <header id="app-header" class="bg-white shadow-sm sticky top-0 z-50 hidden">  
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">  
+            <div>  
+                <h1 class="font-black text-lg text-orange-600 en-text">English Action & Routine</h1>  
+                <p class="text-xs text-slate-500 font-bold en-text mt-0.5">Teacher: Mohammad H. AlFaifi</p>  
+            </div>  
+            <div class="flex items-center gap-3">  
+                <button id="audio-toggle" type="button" onclick="toggleAudio()" class="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition text-xl">🔊</button>  
+            </div>  
+        </div>  
+    </header>  
+  
+    <main id="app-content" class="flex-grow max-w-5xl mx-auto w-full p-4 flex flex-col relative pb-32"></main>  
+  
+    <!-- Vocab Modal -->  
+    <div id="vocab-modal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden flex-col justify-end md:justify-center items-center backdrop-blur-sm transition-opacity">  
+        <div class="bg-white w-full max-w-3xl h-[85vh] md:h-[80vh] md:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col overflow-hidden slide-up">  
+            <div class="p-4 md:p-6 bg-orange-50 border-b border-orange-100 flex justify-between items-center">  
+                <div>  
+                    <h2 class="text-2xl font-black text-orange-800 flex items-center gap-2"><span>🏃‍♂️</span> قاموس الأفعال والوقت</h2>  
+                    <p class="text-orange-600 text-sm font-bold">اضغط على البطاقة لتسمع نطقها</p>  
+                </div>  
+                <button type="button" onclick="toggleVocabBank()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 text-xl font-bold shadow-sm transition-colors">×</button>  
+            </div>  
+            <div class="flex-grow overflow-y-auto p-4 md:p-6 bg-slate-50" id="vocab-content"></div>  
+        </div>  
+    </div>  
+  
+    <script>  
+        // --- State Management ---  
+        // نستخدم نفس مفاتيح التطبيق الأول لجلب اسم الطالب إذا كان موجوداً، أو مفاتيح جديدة للتقدم  
+        const state = {  
+            studentName: localStorage.getItem('ef_studentName') || '',  
+            avatar: localStorage.getItem('ef_avatar') || '👦',  
+            audioEnabled: true,  
+            completedUnits: JSON.parse(localStorage.getItem('ef2_completed')) || [],  
+            finalTestScore: localStorage.getItem('ef2_finalScore') || null,  
+            currentView: null,  
+            currentUnit: null  
+        };  
+  
+        const avatarsList = ['👦', '👧', '🦁', '🦄', '🦉', '🚀', '🌟', '🐼'];  
+        let selectedAvatarTemp = state.avatar;  
+  
+        // --- Audio Functions ---  
+        const AudioContext = window.AudioContext || window.webkitAudioContext;  
+        let audioCtx;  
+        let currentUtterance = null;  
+  
+        function playBeep(type) {  
+            if (!state.audioEnabled) return;  
+            try {  
+                if (!audioCtx) audioCtx = new AudioContext();  
+                const osc = audioCtx.createOscillator();  
+                const gain = audioCtx.createGain();  
+                osc.connect(gain);  
+                gain.connect(audioCtx.destination);  
+                  
+                if (type === 'success') {  
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(500, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3);  
+                } else if (type === 'error') {  
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.2); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3);  
+                }  
+            } catch(e) { console.log('Audio not supported'); }  
+        }  
+  
+        function speak(text, force=false) {  
+            if (!state.audioEnabled && !force) return;  
+            if (!window.speechSynthesis) return;  
+            window.speechSynthesis.cancel();   
+              
+            currentUtterance = new SpeechSynthesisUtterance(text);  
+            currentUtterance.lang = 'en-US';  
+            currentUtterance.rate = 0.85;   
+              
+            const audioBtn = document.getElementById('speak-btn-visual');  
+            if(audioBtn) {  
+                currentUtterance.onstart = () => audioBtn.classList.add('is-speaking');  
+                currentUtterance.onend = () => audioBtn.classList.remove('is-speaking');  
+                currentUtterance.onerror = () => audioBtn.classList.remove('is-speaking');  
+            }  
+            window.speechSynthesis.speak(currentUtterance);  
+        }  
+  
+        function toggleAudio() {  
+            state.audioEnabled = !state.audioEnabled;  
+            document.getElementById('audio-toggle').innerText = state.audioEnabled ? '🔊' : '🔇';  
+            if(!state.audioEnabled && window.speechSynthesis) window.speechSynthesis.cancel();  
+        }  
+  
+        function triggerConfetti(isGrand = false) {  
+            if(typeof confetti !== 'undefined') {  
+                if(isGrand) {  
+                    var duration = 3000; var end = Date.now() + duration;  
+                    (function frame() {  
+                        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f97316', '#db2777', '#fbbf24'] });  
+                        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f97316', '#db2777', '#fbbf24'] });  
+                        if (Date.now() < end) requestAnimationFrame(frame);  
+                    }());  
+                } else {  
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#f97316', '#db2777', '#fbbf24'] });  
+                }  
+            }  
+        }  
+  
+        // --- Vocabulary Bank ---  
+        const vocabBank = [  
+            { category: "أفعال الحركة (Action Verbs)", items: [  
+                {en: "Play", ar: "يلعب", emoji: "⚽"}, {en: "Eat", ar: "يأكل", emoji: "🍔"},   
+                {en: "Drink", ar: "يشرب", emoji: "🥤"}, {en: "Sleep", ar: "ينام", emoji: "😴"},  
+                {en: "Run", ar: "يركض", emoji: "🏃‍♂️"}, {en: "Read", ar: "يقرأ", emoji: "📖"}  
+            ]},  
+            { category: "الروتين اليومي (Daily Routine)", items: [  
+                {en: "Wake up", ar: "يستيقظ", emoji: "🥱"}, {en: "Go to school", ar: "يذهب للمدرسة", emoji: "🎒"},  
+                {en: "Watch TV", ar: "يشاهد التلفاز", emoji: "📺"}, {en: "Do homework", ar: "يحل الواجب", emoji: "📝"}  
+            ]},  
+            { category: "الوقت (Time Words)", items: [  
+                {en: "Morning", ar: "الصباح", emoji: "🌅"}, {en: "Night", ar: "الليل", emoji: "🌃"},  
+                {en: "Today", ar: "اليوم", emoji: "📅"}, {en: "Now", ar: "الآن", emoji: "⏱️"}  
+            ]}  
+        ];  
+  
+        function toggleVocabBank() {  
+            const modal = document.getElementById('vocab-modal');  
+            if(modal.classList.contains('hidden')) {  
+                modal.classList.remove('hidden'); modal.classList.add('flex'); renderVocabBank();  
+            } else {  
+                modal.classList.add('hidden'); modal.classList.remove('flex'); window.speechSynthesis.cancel();  
+            }  
+        }  
+  
+        function renderVocabBank() {  
+            const container = document.getElementById('vocab-content');  
+            let html = '';  
+            vocabBank.forEach(cat => {  
+                html += `<h3 class="font-black text-slate-700 text-xl mb-4 mt-2 border-b-2 border-slate-200 pb-2">${cat.category}</h3>`;  
+                html += `<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">`;  
+                cat.items.forEach(item => {  
+                    const safeEn = item.en.replace(/'/g, "&#39;");  
+                    html += `  
+                        <button type="button" onclick="speak('${safeEn}', true)" class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-orange-400 hover:shadow-md transition-all btn-press flex flex-col items-center gap-2">  
+                            <span class="text-4xl drop-shadow-sm mb-1">${item.emoji}</span>  
+                            <span class="en-text font-black text-lg text-slate-800 tracking-wide">${item.en}</span>  
+                            <span class="text-sm font-bold text-slate-500">${item.ar}</span>  
+                        </button>  
+                    `;  
+                });  
+                html += `</div>`;  
+            });  
+            container.innerHTML = html;  
+        }  
+  
+        // --- Content Database ---  
+        const units = [  
+            { id: 1, title: "أفعال الحركة (Action Verbs)", theory: [  
+                "<div class='space-y-6'><div class='text-center mb-4'><span class='text-6xl'>🏃‍♂️🤸‍♀️</span><h3 class='text-2xl font-bold mt-2 text-orange-700'>الكلمات التي تتحرك!</h3></div><div class='p-5 bg-orange-50 rounded-2xl border border-orange-100'><p class='text-lg font-bold text-slate-700 mb-2'>في التطبيق الأول تعلمنا كيف نصف الأشياء (هو طالب، أنا سعيد). الآن سنتعلم كيف نعبر عن <b class='text-orange-700'>الأفعال والحركة (Verbs)</b>.</p></div></div>",  
+                "<div class='space-y-4'><p class='font-bold text-xl text-slate-800 mb-4'>أمثلة لأفعال الحركة:</p><div class='grid grid-cols-2 gap-4 text-center' dir='ltr'><div class='bg-white p-4 rounded-2xl shadow-sm border border-slate-200'><span class='text-4xl block mb-2'>🏃‍♂️</span><span class='en-text font-black text-2xl text-blue-600 block'>run</span><span class='font-bold text-slate-500 text-sm'>يركض</span></div><div class='bg-white p-4 rounded-2xl shadow-sm border border-slate-200'><span class='text-4xl block mb-2'>⚽</span><span class='en-text font-black text-2xl text-green-600 block'>play</span><span class='font-bold text-slate-500 text-sm'>يلعب</span></div><div class='bg-white p-4 rounded-2xl shadow-sm border border-slate-200'><span class='text-4xl block mb-2'>🍔</span><span class='en-text font-black text-2xl text-amber-600 block'>eat</span><span class='font-bold text-slate-500 text-sm'>يأكل</span></div><div class='bg-white p-4 rounded-2xl shadow-sm border border-slate-200'><span class='text-4xl block mb-2'>😴</span><span class='en-text font-black text-2xl text-purple-600 block'>sleep</span><span class='font-bold text-slate-500 text-sm'>ينام</span></div></div></div>"  
+            ]},  
+            { id: 2, title: "المضارع المستمر (ماذا يحدث الآن؟)", theory: [  
+                "<div class='space-y-6'><div class='text-center mb-4'><span class='text-6xl'>⏱️</span><h3 class='text-2xl font-bold mt-2 text-indigo-700'>التعبير عن اللحظة الحالية</h3></div><div class='p-5 bg-indigo-50 rounded-2xl border border-indigo-100'><p class='text-lg font-bold text-slate-700 mb-2'>عندما نريد أن نتحدث عن شيء نفعله <b class='text-indigo-700'>الآن في هذه اللحظة</b>، نستخدم زمن اسمه (Present Continuous).</p></div></div>",  
+                "<div class='space-y-4'><p class='font-bold text-xl text-slate-800 mb-4'>القاعدة السحرية للإثبات:</p><div class='p-6 bg-white rounded-3xl border-2 border-indigo-200 shadow-sm text-center'><p class='en-text font-black text-2xl text-slate-800 mb-4' dir='ltr'>Subject + <span class='text-blue-500'>(am/is/are)</span> + Verb<span class='text-red-500'>ing</span></p><p class='text-slate-600 font-bold bg-slate-50 p-3 rounded-xl'>لا تنسَ أبداً إضافة فعل الكينونة (am/is/are) قبل الفعل، وإضافة (ing) في نهايته!</p></div></div>",  
+                "<div class='space-y-4'><p class='font-bold text-xl text-slate-800 mb-4'>أمثلة:</p><div class='flex flex-col gap-4 text-left' dir='ltr'><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>I <span class='text-blue-500'>am</span> play<span class='text-red-500'>ing</span>.</span><span class='font-bold text-slate-500' dir='rtl'>أنا ألعب (الآن).</span></div><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>He <span class='text-blue-500'>is</span> eat<span class='text-red-500'>ing</span>.</span><span class='font-bold text-slate-500' dir='rtl'>هو يأكل (الآن).</span></div><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>They <span class='text-blue-500'>are</span> runn<span class='text-red-500'>ing</span>.</span><span class='font-bold text-slate-500' dir='rtl'>هم يركضون (الآن).</span></div></div></div>",  
+                "<div class='space-y-4'><div class='p-6 bg-red-50 rounded-3xl border border-red-200 shadow-sm'><p class='font-black text-red-800 mb-4 text-2xl'>حالة النفي (Negative)</p><p class='mb-4 text-slate-700 font-bold' dir='rtl'>لنقول أننا <b class='text-red-600'>لا نفعل</b> هذا الشيء الآن، نضع كلمة <span dir='ltr' class='en-text font-black text-white bg-red-500 px-3 py-1 rounded-lg mx-1'>not</span> بعد الفعل المساعد.</p><div class='flex flex-col gap-3 text-left' dir='ltr'><div class='bg-white p-4 rounded-xl border border-red-100 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>I am <span class='text-red-500'>not</span> sleeping.</span></div><div class='bg-white p-4 rounded-xl border border-red-100 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>He <span class='text-red-500'>isn't</span> <span class='text-sm text-slate-400'>(is not)</span> eating.</span></div><div class='bg-white p-4 rounded-xl border border-red-100 shadow-sm flex items-center justify-between'><span class='en-text text-xl font-black text-slate-800'>They <span class='text-red-500'>aren't</span> <span class='text-sm text-slate-400'>(are not)</span> running.</span></div></div></div></div>",  
+                "<div class='space-y-4'><div class='p-6 bg-purple-50 rounded-3xl border border-purple-200 shadow-sm'><p class='font-black text-purple-800 mb-4 text-2xl' dir='rtl'>السؤال والإجابة القصيرة</p><p class='mb-4 text-slate-700 font-bold' dir='rtl'>للسؤال (هل يفعل ذلك الآن؟)، نُقدم (am/is/are) في البداية.</p><div class='flex flex-col gap-4 text-left' dir='ltr'><div class='bg-white p-5 rounded-xl border border-purple-100 shadow-sm'><p class='en-text text-2xl font-black text-purple-700 mb-3 border-b border-purple-100 pb-2'>Is he playing?</p><div class='flex items-center gap-3 mb-2'><span class='text-xl'>✔️</span><span class='en-text font-bold text-green-700 text-lg'>Yes, he is.</span></div><div class='flex items-center gap-3'><span class='text-xl'>❌</span><span class='en-text font-bold text-red-700 text-lg'>No, he isn't.</span></div></div><div class='bg-white p-5 rounded-xl border border-purple-100 shadow-sm'><p class='en-text text-2xl font-black text-purple-700 mb-3 border-b border-purple-100 pb-2'>Are they eating?</p><div class='flex items-center gap-3 mb-2'><span class='text-xl'>✔️</span><span class='en-text font-bold text-green-700 text-lg'>Yes, they are.</span></div><div class='flex items-center gap-3'><span class='text-xl'>❌</span><span class='en-text font-bold text-red-700 text-lg'>No, they aren't.</span></div></div></div></div></div>"  
+            ]},  
+            { id: 3, title: "المضارع البسيط (عاداتي اليومية)", theory: [  
+                "<div class='space-y-6'><div class='text-center mb-4'><span class='text-6xl'>📅🔁</span><h3 class='text-2xl font-bold mt-2 text-emerald-700'>التعبير عن الروتين والعادات</h3></div><div class='p-5 bg-emerald-50 rounded-2xl border border-emerald-100'><p class='text-lg font-bold text-slate-700 mb-2'>إذا كنت تتحدث عن شيء تفعله دائماً كروتين أو عادة (مثل الذهاب للمدرسة كل يوم)، فنحن نستخدم زمن (Present Simple).</p></div></div>",  
+                "<div class='space-y-4'><p class='font-bold text-xl text-slate-800 mb-4'>قاعدة الإثبات بسيطة جداً:</p><div class='flex flex-col gap-4 text-left' dir='ltr'><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm'><p class='font-bold text-slate-600 mb-2 text-right' dir='rtl'>1. مع الضمائر (I, You, We, They)، نضع الفعل كما هو:</p><p class='en-text font-black text-slate-800 text-xl bg-slate-50 p-3 rounded-xl border border-slate-100'>➔ I <span class='text-emerald-600 font-black'>play</span> football every day.</p></div><div class='p-5 bg-green-50 rounded-2xl border border-green-200 shadow-sm'><p class='font-bold text-green-800 mb-2 text-right' dir='rtl'>2. ⚠️ مع المفرد الغائب (He, She, It)، يجب إضافة <b class='en-text font-black'>(s)</b> للفعل:</p><p class='en-text font-black text-slate-800 text-xl bg-white p-3 rounded-xl border border-green-100'>➔ She <span class='text-green-600 font-black'>play<span class='text-red-600 text-2xl'>s</span></span> football every day.</p></div></div></div>",  
+                "<div class='space-y-4'><div class='p-6 bg-red-50 rounded-3xl border border-red-200 shadow-sm'><p class='font-black text-red-800 mb-4 text-2xl' dir='rtl'>النفي في الروتين (Negative)</p><p class='mb-4 text-slate-700 font-bold' dir='rtl'>لنقول أننا لا نفعل شيئاً كعادة، نستخدم <b class='en-text text-red-600 font-black'>don't</b> أو <b class='en-text text-red-600 font-black'>doesn't</b>، وبعدها <b class='text-slate-800'>نحذف حرف (s)</b> من الفعل!</p><div class='flex flex-col gap-3 text-left' dir='ltr'><div class='bg-white p-4 rounded-xl border border-red-100 shadow-sm flex flex-col gap-1'><p class='text-sm text-slate-400 font-bold text-right' dir='rtl'>مع (I, You, We, They)</p><span class='en-text text-xl font-black text-slate-800'>I <span class='text-red-500'>don't</span> like apples.</span></div><div class='bg-white p-4 rounded-xl border border-red-100 shadow-sm flex flex-col gap-1'><p class='text-sm text-slate-400 font-bold text-right' dir='rtl'>مع المفرد الغائب (He, She, It)</p><span class='en-text text-xl font-black text-slate-800'>She <span class='text-red-500'>doesn't</span> like apples.</span><p class='text-sm text-orange-600 font-bold mt-1' dir='rtl'>⚠️ لاحظ: حذفنا (s) من كلمة like.</p></div></div></div></div>",  
+                "<div class='space-y-4'><div class='p-6 bg-purple-50 rounded-3xl border border-purple-200 shadow-sm'><p class='font-black text-purple-800 mb-4 text-2xl' dir='rtl'>السؤال عن العادات والإجابة</p><p class='mb-4 text-slate-700 font-bold' dir='rtl'>نسأل بـ <b class='en-text text-purple-700 font-black'>Do</b> للجمع و <b class='en-text text-purple-700 font-black'>Does</b> للمفرد الغائب.</p><div class='flex flex-col gap-4 text-left' dir='ltr'><div class='bg-white p-5 rounded-xl border border-purple-100 shadow-sm'><p class='en-text text-2xl font-black text-purple-700 mb-3 border-b border-purple-100 pb-2'>Do you play tennis?</p><div class='flex items-center gap-3 mb-2'><span class='text-xl'>✔️</span><span class='en-text font-bold text-green-700 text-lg'>Yes, I do.</span></div><div class='flex items-center gap-3'><span class='text-xl'>❌</span><span class='en-text font-bold text-red-700 text-lg'>No, I don't.</span></div></div><div class='bg-white p-5 rounded-xl border border-purple-100 shadow-sm'><p class='en-text text-2xl font-black text-purple-700 mb-3 border-b border-purple-100 pb-2'>Does she like pizza?</p><div class='flex items-center gap-3 mb-2'><span class='text-xl'>✔️</span><span class='en-text font-bold text-green-700 text-lg'>Yes, she does.</span></div><div class='flex items-center gap-3'><span class='text-xl'>❌</span><span class='en-text font-bold text-red-700 text-lg'>No, she doesn't.</span></div></div></div></div></div>"  
+            ]},  
+            { id: 4, title: "قراءة الوقت (Telling Time)", theory: [  
+                "<div class='space-y-6'><div class='text-center mb-4'><span class='text-6xl'>⌚</span><h3 class='text-2xl font-bold mt-2 text-blue-700'>كم الساعة؟</h3></div><div class='p-5 bg-blue-50 rounded-2xl border border-blue-100'><p class='text-lg font-bold text-slate-700 mb-2'>للسؤال عن الوقت نقول: <b class='en-text text-blue-700 mx-1' dir='ltr'>What time is it?</b></p></div></div>",  
+                "<div class='space-y-4'><p class='font-bold text-xl text-slate-800 mb-4'>الإجابة عن الوقت:</p><div class='flex flex-col gap-4 text-left' dir='ltr'><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2'><p class='font-bold text-slate-600 text-right' dir='rtl'>1. الساعة التامة (تماما):</p><span class='en-text font-black text-2xl text-slate-800'>It is seven <span class='text-blue-500'>o'clock</span>. (7:00)</span></div><div class='p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-2'><p class='font-bold text-slate-600 text-right' dir='rtl'>2. النصف (والنصف):</p><span class='en-text font-black text-2xl text-slate-800'>It is <span class='text-purple-500'>half past</span> seven. (7:30)</span></div></div></div>"  
+            ]},  
+            { id: 5, title: "قصة تفاعلية: يومي المزدحم", theory: [  
+                 "<div class='text-center space-y-6 py-6'><div class='text-8xl drop-shadow-lg mb-4'>📖</div><h3 class='text-3xl font-black text-pink-700'>قصة يوم سارة!</h3><p class='text-slate-600 text-xl font-bold leading-relaxed max-w-sm mx-auto bg-pink-50 p-5 rounded-2xl border border-pink-100'>اقرأ القصة وأكمل الفراغات بناءً على ما تعلمناه من النفي، السؤال، والإثبات.</p></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>🌅👧</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد 1</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'>Every morning, Sara <span class='inline-block w-24 border-b-4 border-orange-500 text-orange-600 text-center'>___</span> up at 6 o'clock.</p><div class='grid grid-cols-2 gap-4' id='story-q1'><button type=\"button\" onclick=\"checkStory(this, 'story-q1', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>wake</button><button type=\"button\" onclick=\"checkStory(this, 'story-q1', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>wakes</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: Sara مفرد غائب، نتحدث عن روتينها (مضارع بسيط).</p></div></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>🍳🚫</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد 2</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'>She <span class='inline-block w-28 border-b-4 border-orange-500 text-orange-600 text-center'>___</span> like eggs for breakfast.</p><div class='grid grid-cols-2 gap-4' id='story-q2'><button type=\"button\" onclick=\"checkStory(this, 'story-q2', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>doesn't</button><button type=\"button\" onclick=\"checkStory(this, 'story-q2', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>don't</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: نفي الروتين للمفرد الغائب.</p></div></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>🚌❓</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد 3</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'><span class='inline-block w-20 border-b-4 border-orange-500 text-orange-600 text-center'>___</span> they go to school by bus? Yes, they do.</p><div class='grid grid-cols-2 gap-4' id='story-q3'><button type=\"button\" onclick=\"checkStory(this, 'story-q3', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>Does</button><button type=\"button\" onclick=\"checkStory(this, 'story-q3', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>Do</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: They جمع، كيف نسأل عن العادة؟</p></div></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>📖👀</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد 4 (الآن)</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'>Look! Sara <span class='inline-block w-32 border-b-4 border-orange-500 text-orange-600 text-center'>___</span> a book right now.</p><div class='grid grid-cols-2 gap-4' id='story-q4'><button type=\"button\" onclick=\"checkStory(this, 'story-q4', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>is reading</button><button type=\"button\" onclick=\"checkStory(this, 'story-q4', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>reads</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: right now تعني (الآن).</p></div></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>😴❓</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد 5</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'><span class='inline-block w-20 border-b-4 border-orange-500 text-orange-600 text-center'>___</span> she sleeping? No, she isn't.</p><div class='grid grid-cols-2 gap-4' id='story-q5'><button type=\"button\" onclick=\"checkStory(this, 'story-q5', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>Does</button><button type=\"button\" onclick=\"checkStory(this, 'story-q5', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>Is</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: نسأل عن شيء يحدث الآن (Ing) وفي الإجابة isn't.</p></div></div>",  
+                "<div class='space-y-6'><div class='p-6 bg-white rounded-3xl border-2 border-slate-200 shadow-sm'><p class='text-center text-6xl mb-6'>💤</p><p class='text-center font-bold text-slate-500 mb-2'>المشهد الأخير</p><p class='en-text text-2xl font-black text-center mb-6 leading-relaxed' dir='ltr'>At 9 o'clock night, they <span class='inline-block w-20 border-b-4 border-orange-500 text-orange-600 text-center'>___</span>.</p><div class='grid grid-cols-2 gap-4' id='story-q6'><button type=\"button\" onclick=\"checkStory(this, 'story-q6', false)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>sleeps</button><button type=\"button\" onclick=\"checkStory(this, 'story-q6', true)\" class='btn-press p-4 bg-slate-100 rounded-2xl font-black en-text text-xl hover:bg-slate-200'>sleep</button></div><p class='text-sm text-center mt-4 text-slate-400 font-bold' dir='rtl'>تلميح: They جمع، الفعل يعود لأصله.</p></div></div>"  
+            ], isStory: true }  
+        ];  
+  
+        // Final Assessment Questions  
+        const finalQuestions = [  
+            { q: "اختر الجملة الصحيحة للتعبير عما تفعله **الآن**:", options: ["I am play.", "I playing.", "I play.", "I am playing."], correct: 3, feedback: "للتعبير عن الآن نستخدم am/is/are ثم الفعل مع ing." },  
+            { q: "أكمل الجملة للتعبير عن الروتين اليومي:<br><bdi dir='ltr' class='en-text text-orange-800 text-2xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center'>Ali ____ to school every day.</bdi>", options: ["go", "goes", "is go", "going"], correct: 1, feedback: "Ali مفرد غائب، والروتين (every day) يتطلب إضافة s/es للفعل." },  
+            { q: "ما معنى هذه الجملة؟<br><bdi dir='ltr' class='en-text text-orange-800 text-xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center border border-orange-100'>He is eating.</bdi>", options: ["هو يأكل كل يوم", "هو يحب الأكل", "هو يأكل الآن", "هو أكل أمس"], correct: 2, feedback: "وجود is و ing يعني أن الفعل يحدث الآن في هذه اللحظة." },  
+            { q: "إذا كانت الساعة 4:00، كيف نقولها بالإنجليزية؟", options: ["It is four o'clock.", "It is half past four.", "It is four past half.", "It is o'clock four."], correct: 0, feedback: "الساعة التامة (تماما) نستخدم معها كلمة o'clock." },  
+            { q: "أكمل الجملة:<br><bdi dir='ltr' class='en-text text-orange-800 text-2xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center'>They ____ football on Fridays.</bdi>", options: ["plays", "is playing", "play", "playing"], correct: 2, feedback: "They للجمع، وفي الروتين (on Fridays) يبقى الفعل كما هو بدون s." },  
+              
+            { type: "mistake", q: "أين الخطأ في هذه الجملة التي تعبر عن الآن؟<br><bdi dir='ltr' class='en-text text-red-700 text-2xl block mt-3 font-black bg-red-50 p-4 rounded-xl text-center shadow-inner border border-red-100'>She is read a book.</bdi>", options: ["She", "is", "read", "a"], correct: 2, feedback: "الفعل يجب أن ينتهي بـ ing ليصبح reading لأننا نستخدم is." },  
+            { type: "blind", audioText: "It is half past ten.", q: "🎧 استمع ثم اختر الجملة التي سمعتها:", options: ["It is half past ten.", "It is ten o'clock.", "It is half past two.", "It is time to sleep."], correct: 0, feedback: "سمعنا (It is half past ten) وتعني العاشرة والنصف." },  
+              
+            { q: "كيف تسأل عن الوقت؟", options: ["How old are you?", "What time is it?", "Where are you?", "How many?"], correct: 1, feedback: "للسؤال عن الوقت نقول What time is it?" },  
+            { q: "كيف تنفي هذه الجملة (الآن)؟<br><bdi dir='ltr' class='en-text text-orange-800 text-xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center border border-orange-100'>He is playing.</bdi>", options: ["He don't playing.", "He doesn't play.", "He isn't playing.", "He am not playing."], correct: 2, feedback: "في المضارع المستمر ننفي بوضع not بعد is لتصبح isn't." },  
+            { q: "أكمل النفي للروتين:<br><bdi dir='ltr' class='en-text text-orange-800 text-2xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center'>She ____ like fish.</bdi>", options: ["isn't", "don't", "doesn't", "aren't"], correct: 2, feedback: "لنفي العادة مع المفرد الغائب (She) نستخدم doesn't." },  
+            { q: "أكمل السؤال:<br><bdi dir='ltr' class='en-text text-orange-800 text-2xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center'>____ they eating now?</bdi>", options: ["Do", "Does", "Is", "Are"], correct: 3, feedback: "نسأل عن شيء يحدث الآن (now) ومعه (ing) للجمع باستخدام Are." },  
+            { q: "كيف تجيب على هذا السؤال؟<br><bdi dir='ltr' class='en-text text-orange-800 text-xl block mt-3 font-black bg-orange-50 p-3 rounded-xl text-center border border-orange-100'>Do you play tennis?</bdi>", options: ["Yes, I am.", "Yes, I do.", "Yes, he does.", "Yes, I is."], correct: 1, feedback: "السؤال بدأ بـ Do ويوجه لك (you)، فالإجابة تكون Yes, I do." }  
+        ];  
+  
+        // --- Core UI Functions ---  
+        function renderUI() {  
+            const container = document.getElementById('app-content');  
+            const header = document.getElementById('app-header');  
+              
+            if (!state.studentName) {  
+                header.classList.add('hidden'); renderWelcome(container);  
+            } else if (state.currentView === 'home' || !state.currentView) {  
+                header.classList.remove('hidden'); renderHome(container);  
+            } else if (state.currentView === 'lesson') {  
+                header.classList.remove('hidden'); renderLesson(container);  
+            } else if (state.currentView === 'quiz') {  
+                header.classList.remove('hidden'); renderAssessment(container);  
+            } else if (state.currentView === 'certificate') {  
+                header.classList.add('hidden'); renderCertificate(container);  
+            }  
+        }  
+  
+        function saveState() {  
+            localStorage.setItem('ef_studentName', state.studentName);  
+            localStorage.setItem('ef_avatar', state.avatar);  
+            localStorage.setItem('ef2_completed', JSON.stringify(state.completedUnits));  
+            if(state.finalTestScore !== null) localStorage.setItem('ef2_finalScore', state.finalTestScore);  
+        }  
+  
+        // --- Screens ---  
+        function selectAvatar(avatar, btnElement) {  
+            selectedAvatarTemp = avatar;  
+            document.querySelectorAll('.avatar-btn').forEach(b => {  
+                b.classList.remove('bg-orange-100', 'border-orange-500', 'scale-110');  
+                b.classList.add('bg-slate-50', 'border-transparent');  
+            });  
+            btnElement.classList.remove('bg-slate-50', 'border-transparent');  
+            btnElement.classList.add('bg-orange-100', 'border-orange-500', 'scale-110');  
+            playBeep('success');  
+        }  
+  
+        function renderWelcome(container) {  
+            container.innerHTML = `  
+                <div class="glass-panel rounded-[2rem] p-6 md:p-10 max-w-md w-full mx-auto mt-6 shadow-xl slide-up text-center border-t-4 border-orange-500">  
+                    <h2 class="text-3xl font-black text-orange-800 mb-2">أهلاً بك في الجزء الثاني!</h2>  
+                    <p class="text-slate-600 mb-6 text-base md:text-lg bg-orange-50 p-3 rounded-xl font-bold">تطبيق "حياتي اليومية" والأفعال الإنجليزية.</p>  
+                      
+                    <div class="mb-6 text-right">  
+                        <label class="block text-base font-bold text-slate-700 mb-3 text-center">شخصيتك المفضلة 👾:</label>  
+                        <div class="flex gap-3 overflow-x-auto py-2 no-scrollbar px-1 justify-center">  
+                            ${avatarsList.slice(0,5).map(av => `  
+                                <button type="button" onclick="selectAvatar('${av}', this)" class="avatar-btn flex-shrink-0 w-14 h-14 rounded-full text-3xl flex items-center justify-center border-2 transition-all cursor-pointer ${av === selectedAvatarTemp ? 'bg-orange-100 border-orange-500 scale-110' : 'bg-slate-50 border-transparent hover:bg-slate-100'}">${av}</button>  
+                            `).join('')}  
+                        </div>  
+                    </div>  
+                    <div class="mb-8 text-right">  
+                        <label class="block text-base font-bold text-slate-700 mb-3 text-center">ما اسمك؟</label>  
+                        <input type="text" id="nameInput" value="${state.studentName}" class="w-full p-4 border-2 border-orange-200 rounded-2xl focus:outline-none focus:border-orange-500 text-center font-black text-2xl shadow-inner transition-colors" placeholder="اكتب اسمك هنا...">  
+                    </div>  
+                    <button type="button" onclick="startApp()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-lg btn-press text-xl transition-colors block">  
+                        ابدأ التحدي 🚀  
+                    </button>  
+                </div>  
+            `;  
+        }  
+  
+        function startApp() {  
+            const name = document.getElementById('nameInput').value.trim();  
+            if (name) {  
+                state.studentName = name; state.avatar = selectedAvatarTemp; state.currentView = 'home';  
+                saveState(); renderUI(); playBeep('success');  
+            }  
+        }  
+  
+        function goHome() { state.currentView = 'home'; document.body.classList.remove('cert-mode-active'); renderUI(); window.scrollTo(0,0); }  
+  
+        function renderHome(container) {  
+            let unitsHTML = units.map(u => {  
+                const isDone = state.completedUnits.includes(u.id);  
+                return `  
+                    <button type="button" onclick="startLesson(${u.id})" class="w-full text-right glass-panel p-5 rounded-2xl cursor-pointer btn-press border-2 transition-all ${isDone ? 'border-orange-400 bg-orange-50/70 shadow-sm' : 'border-transparent hover:border-slate-300 shadow'} flex items-center justify-between mt-3">  
+                        <div class="flex items-center gap-5">  
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center font-black text-white text-xl shadow-sm ${isDone ? 'bg-orange-500' : 'bg-slate-300 text-slate-600'}">  
+                                ${isDone ? '<span class="star-anim text-2xl">⭐</span>' : u.id}  
+                            </div>  
+                            <h3 class="font-bold text-slate-800 text-base md:text-xl leading-relaxed">${u.title}</h3>  
+                        </div>  
+                        ${isDone ? `<span class="text-orange-600 font-bold text-sm bg-orange-100 px-3 py-1 rounded-full border border-orange-200">مكتمل</span>` : ''}  
+                    </button>  
+                `;  
+            }).join('');  
+  
+            const progressPercent = Math.round((state.completedUnits.length / units.length) * 100);  
+              
+            const hasContinuousBadge = state.completedUnits.includes(2);  
+            const hasSimpleBadge = state.completedUnits.includes(3);  
+            const hasMasterBadge = state.completedUnits.length === units.length;  
+  
+            container.innerHTML = `  
+                <div class="fade-in max-w-2xl mx-auto w-full pt-4">  
+                    <div class="theme-gradient rounded-[2rem] p-6 md:p-8 text-white shadow-xl mb-6 flex justify-between items-center border border-pink-500">  
+                        <div>  
+                            <h2 class="text-2xl md:text-3xl font-black mb-2 drop-shadow-sm flex items-center gap-3">مرحباً مجدداً، ${state.studentName}! <span class="text-4xl block">${state.avatar}</span></h2>  
+                            <p class="text-pink-100 text-base md:text-lg font-bold">في الجزء الثاني لتعلم الإنجليزية.</p>  
+                        </div>  
+                    </div>  
+  
+                    <div class="mb-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">  
+                        <div class="flex justify-between items-center mb-3">  
+                            <span class="font-bold text-slate-700 text-lg">التقدم الكلي 📊</span>  
+                            <span class="font-black text-orange-600 text-xl">${progressPercent}%</span>  
+                        </div>  
+                        <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden shadow-inner">  
+                            <div class="bg-orange-500 h-full transition-all duration-1000 ease-out" style="width: ${progressPercent}%"></div>  
+                        </div>  
+                    </div>  
+  
+                    <div class="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">  
+                        <h3 class="font-bold text-slate-700 mb-4 text-lg">أوسمة الحركة 🏅</h3>  
+                        <div class="flex gap-4 justify-around text-center">  
+                            <div class="flex flex-col items-center gap-2 ${hasContinuousBadge ? '' : 'badge-locked'}">  
+                                <span class="text-4xl drop-shadow-md">⏱️</span><span class="text-xs font-bold text-slate-600">بطل اللحظة</span>  
+                            </div>  
+                            <div class="flex flex-col items-center gap-2 ${hasSimpleBadge ? '' : 'badge-locked'}">  
+                                <span class="text-4xl drop-shadow-md">🔁</span><span class="text-xs font-bold text-slate-600">سيد الروتين</span>  
+                            </div>  
+                            <div class="flex flex-col items-center gap-2 ${hasMasterBadge ? '' : 'badge-locked'}">  
+                                <span class="text-4xl drop-shadow-md">👑</span><span class="text-xs font-bold text-slate-600">نجم التطبيق 2</span>  
+                            </div>  
+                        </div>  
+                    </div>  
+  
+                    <button type="button" onclick="toggleVocabBank()" class="w-full mb-8 bg-white border-2 border-indigo-200 rounded-[2rem] p-5 flex items-center justify-between shadow-sm hover:shadow-md hover:border-indigo-300 transition-all btn-press">  
+                         <div class="flex items-center gap-4">  
+                             <span class="text-4xl">📚</span>  
+                             <div class="text-right">  
+                                 <h3 class="font-black text-indigo-800 text-xl">قاموس الأفعال والوقت</h3>  
+                             </div>  
+                         </div>  
+                         <span class="text-2xl text-indigo-300">⬅️</span>  
+                    </button>  
+  
+                    <div class="grid gap-2 mb-10">${unitsHTML}</div>  
+  
+                    <div id="assessment-section" class="mt-8 bg-pink-50 border-2 border-pink-300 rounded-[2rem] p-6 md:p-8 text-center shadow-md mb-8">  
+                        <h3 class="font-black text-pink-900 text-2xl mb-3">التقييم النهائي 🏆</h3>  
+                        <p class="text-pink-700 mb-6 text-base md:text-lg font-bold bg-white p-4 rounded-xl inline-block shadow-sm border border-pink-100">احصل على شهادة التطبيق الثاني!</p>  
+                        <button type="button" onclick="startAssessment()" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-black py-5 px-8 rounded-2xl shadow-lg btn-press transition-colors text-xl border border-pink-800 block">ابدأ التقييم 🚀</button>  
+                    </div>  
+  
+                    ${state.finalTestScore !== null ? `  
+                         <div class="text-center mt-4 bg-white p-4 rounded-2xl shadow border border-slate-100">  
+                            <button type="button" onclick="viewCertificate()" class="text-orange-700 font-bold underline text-lg p-2 block w-full">عرض الشهادة 📜</button>  
+                        </div>  
+                    ` : ''}  
+                </div>  
+            `;  
+        }  
+  
+        // --- Lesson Logic ---  
+        let lessonStep = 0;  
+  
+        function startLesson(id) {  
+            state.currentUnit = units.find(u => u.id === id); lessonStep = 0; state.currentView = 'lesson';  
+            renderUI(); window.scrollTo(0,0);  
+        }  
+  
+        function checkStory(btn, containerId, isCorrect) {  
+            const container = document.getElementById(containerId);  
+            const buttons = container.querySelectorAll('button');  
+            buttons.forEach(b => { b.disabled = true; b.classList.add('opacity-50'); });  
+              
+            if(isCorrect) {  
+                btn.classList.remove('bg-slate-100', 'opacity-50'); btn.classList.add('bg-orange-500', 'text-white', 'border-orange-600', 'opacity-100');  
+                playBeep('success'); triggerConfetti(false);  
+            } else {  
+                btn.classList.remove('bg-slate-100', 'opacity-50'); btn.classList.add('bg-red-500', 'text-white', 'border-red-600', 'opacity-100');  
+                playBeep('error');  
+            }  
+        }  
+  
+        function nextStep() {  
+            const unit = state.currentUnit;  
+            if (lessonStep < unit.theory.length - 1) {  
+                lessonStep++; renderUI(); window.scrollTo(0,0);  
+            } else { finishLesson(); }  
+        }  
+          
+        function prevStep() {  
+            if (lessonStep > 0) { lessonStep--; renderUI(); window.scrollTo(0,0); }  
+        }  
+  
+        function finishLesson() {  
+            if (!state.completedUnits.includes(state.currentUnit.id)) {  
+                state.completedUnits.push(state.currentUnit.id); saveState();  
+            }  
+            playBeep('success'); triggerConfetti(false);  
+              
+            const currentIndex = units.findIndex(u => u.id === state.currentUnit.id);  
+            if (currentIndex < units.length - 1) {  
+                startLesson(units[currentIndex + 1].id);   
+            } else {  
+                goHome(); setTimeout(() => { const sec = document.getElementById('assessment-section'); if(sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);  
+            }  
+        }  
+  
+        function renderLesson(container) {  
+            const unit = state.currentUnit;  
+            const progress = ((lessonStep + 1) / unit.theory.length) * 100;  
+            const content = unit.theory[lessonStep];  
+  
+            let nextBtnText = lessonStep === unit.theory.length - 1 ? (unit.id === units[units.length-1].id ? 'انتقال للتقييم 🏆' : 'إنهاء وانتقال للتالي') : 'التالي';  
+  
+            container.innerHTML = `  
+                <div class="max-w-2xl mx-auto w-full fade-in flex flex-col h-full mt-4 pb-10">  
+                    <div class="flex items-center gap-5 mb-6 px-2">  
+                        <button type="button" onclick="goHome()" class="w-12 h-12 bg-white rounded-full shadow-md border border-slate-200 flex items-center justify-center text-slate-500 text-2xl font-black btn-press hover:bg-slate-50 hover:text-red-500 z-40 relative">×</button>  
+                        <div class="flex-grow bg-slate-200 h-4 rounded-full overflow-hidden shadow-inner relative z-10">  
+                            <div class="bg-orange-500 h-full transition-all duration-500 ease-out" style="width: ${progress}%"></div>  
+                        </div>  
+                    </div>  
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-6 text-center px-2 drop-shadow-sm">${unit.title}</h2>  
+                    <div class="glass-panel flex-grow rounded-[2rem] p-6 md:p-10 shadow-lg border border-slate-200 mb-8 flex flex-col justify-start relative w-full overflow-visible bg-white z-20">  
+                        ${!unit.isStory ? `<button id="speak-btn-visual" type="button" onclick="speakContent()" class="absolute top-6 left-6 px-4 py-2 bg-blue-50 text-blue-700 rounded-2xl border border-blue-200 hover:bg-blue-100 text-sm md:text-base font-black flex gap-2 items-center z-40 shadow-sm"><span>استمع</span> 🔊</button>` : ''}  
+                        <div class="text-slate-800 text-base md:text-xl leading-relaxed mt-16 md:mt-16 w-full relative z-30 flex-grow" id="lesson-content">${content}</div>  
+                    </div>  
+                    <div class="flex gap-4 px-2 relative z-30">  
+                        ${lessonStep > 0 ? `<button type="button" onclick="prevStep()" class="flex-1 bg-white text-slate-700 border-2 border-slate-300 hover:bg-slate-50 py-5 rounded-2xl font-black btn-press shadow-sm text-lg block">السابق</button>` : `<div class="flex-1"></div>`}  
+                        <button type="button" onclick="nextStep()" class="flex-[2] bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black shadow-lg btn-press text-lg border border-orange-600 block">${nextBtnText}</button>  
+                    </div>  
+                </div>  
+            `;  
+        }  
+  
+        function speakContent() {  
+            const contentDiv = document.getElementById('lesson-content'); if(!contentDiv) return;  
+            const enElements = contentDiv.querySelectorAll('.en-text');  
+            if(enElements.length > 0) { let text = Array.from(enElements).map(el => el.innerText).join('. '); speak(text, true); }  
+        }  
+  
+        // --- Assessment ---  
+        let currentQuizQuestions = []; let currentQuestionIndex = 0; let testScore = 0; let isAnswerSubmitted = false;  
+  
+        function startAssessment() {  
+            currentQuizQuestions = finalQuestions.map(q => {  
+                const opts = q.options.map((opt, idx) => ({text: opt, isCorrect: idx === q.correct}));  
+                opts.sort(() => Math.random() - 0.5); return { ...q, shuffledOptions: opts };  
+            }).sort(() => Math.random() - 0.5);  
+            currentQuestionIndex = 0; testScore = 0; isAnswerSubmitted = false; state.currentView = 'quiz';  
+            renderUI(); window.scrollTo(0,0);  
+        }  
+  
+        function submitAnswer(selectedIndex) {  
+            if (isAnswerSubmitted) return; isAnswerSubmitted = true;  
+            const q = currentQuizQuestions[currentQuestionIndex]; const isCorrect = q.shuffledOptions[selectedIndex].isCorrect;  
+            if (isCorrect) { testScore++; playBeep('success'); } else { playBeep('error'); }  
+            renderQuizFeedback(selectedIndex, isCorrect, q.shuffledOptions.findIndex(o => o.isCorrect), q.feedback);  
+        }  
+  
+        function nextQuestion() {  
+            currentQuestionIndex++; isAnswerSubmitted = false;  
+            if (currentQuestionIndex < currentQuizQuestions.length) { renderUI(); window.scrollTo(0,0); } else { finishAssessment(); }  
+        }  
+  
+        function renderAssessment(container) {  
+            const q = currentQuizQuestions[currentQuestionIndex]; const progress = ((currentQuestionIndex + 1) / currentQuizQuestions.length) * 100;  
+            let questionHTML = `<h3 class="text-xl md:text-3xl font-black text-slate-800 mb-10 text-center leading-relaxed" dir="rtl">${q.q}</h3>`;  
+            if (q.type === 'blind') {  
+                const safeAudio = q.audioText.replace(/'/g, "&#39;");  
+                questionHTML = `<div class="text-center mb-8 flex flex-col items-center gap-4"><span class="text-5xl">🎧</span><h3 class="text-xl md:text-2xl font-black text-slate-800" dir="rtl">${q.q}</h3><button type="button" onclick="speak('${safeAudio}', true)" class="mt-4 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-2 border-indigo-300 py-4 px-8 rounded-full font-black text-2xl flex items-center justify-center gap-3 shadow-sm btn-press"><span>استمع للجملة</span> 🔊</button></div>`;  
+            }  
+            container.innerHTML = `  
+                <div class="max-w-2xl mx-auto w-full fade-in mt-4 flex flex-col h-full pb-10">  
+                    <div class="flex justify-between items-center mb-6 px-2">  
+                        <span class="text-sm font-black text-slate-600 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-200">سؤال ${currentQuestionIndex + 1} من ${currentQuizQuestions.length}</span>  
+                        <button type="button" onclick="goHome()" class="text-sm text-red-600 font-black bg-white px-4 py-2 rounded-2xl border border-red-200 shadow-sm hover:bg-red-50 z-40 relative">إلغاء</button>  
+                    </div>  
+                    <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden mb-6 shadow-inner px-2 relative z-10">  
+                        <div class="bg-pink-500 h-full transition-all duration-300" style="width: ${progress}%"></div>  
+                    </div>  
+                    <div class="glass-panel p-6 md:p-10 rounded-[2rem] shadow-lg border border-slate-200 mb-8 flex-grow relative bg-white z-20">  
+                        ${questionHTML}  
+                        <div class="grid gap-4 relative z-30" id="options-container">  
+                            ${q.shuffledOptions.map((opt, index) => {  
+                                const safeOpt = opt.text.replace(/'/g, '&#39;');  
+                                return `<button type="button" onclick="submitAnswer(${index})" class="w-full text-left p-6 rounded-2xl border-2 border-slate-200 hover:border-pink-400 hover:bg-pink-50 text-xl md:text-2xl font-black text-slate-700 en-text btn-press flex items-center justify-between shadow-sm bg-white relative block" dir="ltr"><span class="select-none pointer-events-none">${safeOpt}</span><span class="w-8 h-8 rounded-full border-4 border-slate-300 inline-block indicator transition-colors pointer-events-none"></span></button>`;  
+                            }).join('')}  
+                        </div>  
+                        <div id="feedback-container" class="mt-8 hidden relative z-30"></div>  
+                    </div>  
+                    <div id="action-container" class="hidden px-2 relative z-50">  
+                        <button id="next-btn" type="button" onclick="nextQuestion()" class="w-full bg-pink-600 hover:bg-pink-700 text-white py-5 rounded-2xl font-black shadow-xl btn-press text-2xl border border-pink-800 block">${currentQuestionIndex === currentQuizQuestions.length - 1 ? 'عرض النتيجة 🏆' : 'السؤال التالي'}</button>  
+                    </div>  
+                </div>  
+            `;  
+        }  
+  
+        function renderQuizFeedback(selectedIndex, isCorrect, correctIndex, feedbackText) {  
+            const buttons = document.querySelectorAll('#options-container button');  
+            buttons.forEach(b => { b.onclick = null; b.classList.remove('hover:border-pink-400', 'hover:bg-pink-50', 'btn-press'); b.classList.add('opacity-80', 'cursor-default'); });  
+            const selectedBtn = buttons[selectedIndex]; const correctBtn = buttons[correctIndex];  
+            if (isCorrect) {  
+                selectedBtn.classList.remove('border-slate-200', 'opacity-80'); selectedBtn.classList.add('border-green-500', 'bg-green-50', 'opacity-100'); selectedBtn.querySelector('.indicator').classList.add('bg-green-500', 'border-green-500');  
+            } else {  
+                selectedBtn.classList.remove('border-slate-200', 'opacity-80'); selectedBtn.classList.add('border-red-500', 'bg-red-50', 'opacity-100'); selectedBtn.querySelector('.indicator').classList.add('bg-red-500', 'border-red-500');  
+                correctBtn.classList.remove('border-slate-200', 'opacity-80'); correctBtn.classList.add('border-green-500', 'bg-green-50', 'opacity-100');  
+            }  
+            const safeFeedback = feedbackText.replace(/'/g, '&#39;');  
+            const feedbackEl = document.getElementById('feedback-container');  
+            feedbackEl.innerHTML = `<div class="p-6 rounded-2xl slide-up shadow-sm border-2 ${isCorrect ? 'bg-green-100 text-green-900 border-green-300' : 'bg-red-100 text-red-900 border-red-300'}"><p class="font-black text-2xl mb-3 flex items-center gap-3">${isCorrect ? '<span>👏</span> إجابة صحيحة!' : '<span>💡</span> تحتاج إلى مراجعة'}</p><p class="text-xl bg-white/70 p-4 rounded-xl font-bold border ${isCorrect ? 'border-green-200' : 'border-red-200'}">${safeFeedback}</p></div>`;  
+            feedbackEl.classList.remove('hidden'); document.getElementById('action-container').classList.remove('hidden');  
+            setTimeout(() => { const nb = document.getElementById('next-btn'); if(nb) nb.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);  
+        }  
+  
+        function finishAssessment() {  
+            state.finalTestScore = testScore; saveState();  
+            if(testScore >= Math.floor(currentQuizQuestions.length / 2)) { triggerConfetti(true); }  
+            viewCertificate();  
+        }  
+  
+        function viewCertificate() {  
+            state.currentView = 'certificate'; renderUI(); window.scrollTo(0,0);  
+            if(state.finalTestScore >= Math.floor(finalQuestions.length / 2)) setTimeout(() => playBeep('success'), 100);  
+        }  
+  
+        // --- Certificate ---  
+        function renderCertificate(container) {  
+            const totalQ = finalQuestions.length; const percentage = Math.round((state.finalTestScore / totalQ) * 100); const date = new Date().toLocaleDateString('en-GB');   
+            container.innerHTML = `  
+                <div id="cert-controls" class="max-w-2xl mx-auto w-full fade-in mb-8 text-center slide-up px-2 mt-4">  
+                    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-200 mb-4">  
+                        <h3 class="font-black text-slate-800 text-2xl mb-4">نتيجة التقييم - التطبيق 2</h3>  
+                        <p class="text-slate-600 text-xl mb-6 bg-slate-50 py-4 rounded-2xl border border-slate-100 font-bold">حصلت على <b class="text-pink-700 text-3xl mx-2">${state.finalTestScore}</b> من ${totalQ} (<b class="text-pink-700 text-2xl mx-1">${percentage}%</b>)</p>  
+                        <div class="flex flex-wrap gap-4 justify-center">  
+                            <button type="button" onclick="goHome()" class="px-6 py-4 bg-slate-200 text-slate-800 rounded-2xl font-black text-lg shadow-sm block">الرئيسية</button>  
+                            ${percentage < 100 ? `<button type="button" onclick="startAssessment()" class="px-6 py-4 bg-pink-100 text-pink-800 rounded-2xl font-black text-lg shadow-sm block">إعادة التقييم</button>` : ''}  
+                            <button type="button" onclick="toggleCertMode()" class="px-6 py-4 bg-orange-500 text-white rounded-2xl font-black text-lg shadow-md block w-full md:w-auto">تصوير الشهادة 📸</button>  
+                        </div>  
+                    </div>  
+                </div>  
+                <div class="fade-in w-full pb-10 px-2 flex justify-center" onclick="exitCertMode()">  
+                    <div class="cert-wrapper rounded-3xl flex flex-col justify-center" id="certificate-node" style="min-height: 75vh;">  
+                        <div class="cert-bg rounded-3xl"></div>  
+                        <div class="cert-content flex-grow flex flex-col items-center justify-center p-6 md:p-12 w-full h-full">  
+                            <div class="mb-4 text-center">  
+                                <h1 class="text-2xl md:text-5xl font-black text-pink-700 en-text mb-2 drop-shadow-sm">Certificate of Achievement</h1>  
+                                <h2 class="text-xl md:text-4xl font-black text-orange-500 drop-shadow-sm">شهادة إنجاز - المستوى الثاني</h2>  
+                            </div>  
+                            <p class="text-sm md:text-2xl text-slate-700 mb-2 md:mb-4 font-bold text-center mt-2">مُنحت للطالب / الطالبة:</p>  
+                            <p class="text-2xl md:text-6xl font-black text-pink-800 mb-4 md:mb-6 border-b-4 border-slate-300 pb-2 md:pb-4 px-4 md:px-12 inline-block drop-shadow-sm leading-tight text-center flex items-center justify-center gap-3 md:gap-4 w-full">  
+                                <span class="truncate overflow-hidden max-w-full block pb-1">${state.studentName}</span><span class="text-3xl md:text-6xl">${state.avatar}</span>  
+                            </p>  
+                            <p class="text-xs md:text-2xl text-slate-800 mb-6 md:mb-8 max-w-2xl leading-relaxed font-bold bg-slate-50/70 p-4 md:p-8 rounded-2xl md:rounded-3xl border border-slate-100 text-center w-full shadow-sm">  
+                                لإكماله بنجاح مسار الأفعال والروتين اليومي في تطبيق:<br>  
+                                <span class="font-black text-orange-600 text-lg md:text-4xl block mt-2 md:mt-3 mb-1 md:mb-2 drop-shadow-sm">English Action & Routine</span>  
+                            </p>  
+                            <div class="flex flex-row justify-between w-full mt-auto pt-4 md:pt-6 border-t-4 border-slate-200 gap-2 md:gap-3">  
+                                <div class="text-center bg-white/90 p-2 md:p-4 rounded-xl md:rounded-2xl shadow-sm flex-1"><p class="text-[10px] md:text-base text-slate-500 mb-1 en-text font-black">Score</p><p class="font-black text-pink-700 en-text text-sm md:text-2xl" dir="ltr">${state.finalTestScore}/${totalQ}</p></div>  
+                                <div class="text-center bg-white/90 p-2 md:p-4 rounded-xl md:rounded-2xl shadow-sm flex-1 border-x border-slate-100"><p class="text-[10px] md:text-base text-slate-500 mb-1 en-text font-black">Teacher</p><p class="font-black text-pink-700 en-text text-[10px] md:text-xl leading-tight mt-1 md:mt-2">Mohammad H. Alfaifi</p></div>  
+                                <div class="text-center bg-white/90 p-2 md:p-4 rounded-xl md:rounded-2xl shadow-sm flex-1"><p class="text-[10px] md:text-base text-slate-500 mb-1 en-text font-black">Date</p><p class="font-black text-pink-700 en-text text-sm md:text-2xl" dir="ltr">${date}</p></div>  
+                            </div>  
+                        </div>  
+                    </div>  
+                </div>  
+            `;  
+        }  
+  
+        function toggleCertMode() {  
+            document.body.classList.add('cert-mode-active'); document.body.style.overflow = 'hidden'; window.scrollTo(0,0);  
+            const toast = document.createElement('div'); toast.id = 'exit-toast'; toast.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-8 py-5 rounded-3xl text-lg font-black shadow-2xl z-[100] transition-opacity text-center w-[90%] max-w-md border border-slate-700'; toast.innerHTML = 'التقط الشاشة الآن 📸<br><span class="text-sm font-bold text-orange-300 mt-2 block">💡 تدوير الجوال بالعرض يعطي صورة أفضل</span><span class="text-xs font-normal opacity-70 mt-2 block">(اضغط في أي مكان للعودة)</span>'; document.body.appendChild(toast);  
+            setTimeout(() => { const t = document.getElementById('exit-toast'); if(t) { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); } }, 5000);  
+        }  
+  
+        function exitCertMode() {  
+            if(document.body.classList.contains('cert-mode-active')) { document.body.classList.remove('cert-mode-active'); document.body.style.overflow = ''; const toast = document.getElementById('exit-toast'); if(toast) toast.remove(); }  
+        }  
+  
+        window.onload = () => { renderUI(); };  
+    </script>  
+</body>  
+</html>  
